@@ -1,0 +1,221 @@
+<html>
+<head>
+<title>TCPOS Config Assistant</title>
+<HTA:APPLICATION
+  APPLICATIONNAME="TCPOS Config Assistant"
+  ID="objTest"
+  VERSION="1.0.0.0"
+  ICON="Treetog-Junior-Box-config.ico"
+  SINGLEINSTANCE="yes"/>
+</head>
+
+<SCRIPT LANGUAGE="VBScript">
+Function handler()
+	ReadIniFile
+End Function
+
+Sub Window_OnLoad
+	ReadIniFile
+	window.resizeTo screen.availWidth/3,screen.availHeight/1.5
+	window.moveTo screen.availWidth/4,screen.availHeight/4
+	'isFile
+	'ReadIniFile
+End Sub
+
+Sub isFile
+	Dim oFSO, oTxtFile   
+	Set oFSO = CreateObject("Scripting.FileSystemObject")     
+	If oFSO.FileExists("c:\temp\TCPOS.FrontEnd.ini")  then
+	       Msgbox "File Esiste",64,"OK"
+	Else 
+	      Set oTxtFile = oFSO.CreateTextFile("c:\temp\TCPOS.FrontEnd.ini")  
+	      Msgbox "Attenzione il file non esiste!!!",48,"Errore"
+	End If
+End Sub
+
+Sub Main
+	'PASS THE FILENAME TO THR FUNCTION
+	MyFunc '("c:\temp\TCPOS.FrontEnd.ini")
+	secondarray = MyFunc
+	target = "c:\temp\TCPOS.FrontEnd.ini"
+	'For i = lbound(secondarray) to ubound(secondarray)  
+		'MsgBox secondarray(i)  
+	'Next  
+	'MsgBox "Rename file c:\temp\TCPOS.FrontEnd.ini in c:\temp\TCPOS.FrontEnd.old"
+	
+	a = "c:\temp\TCPOS.FrontEnd.ini"
+	b = "c:\temp\TCPOS.FrontEnd.old"
+	RenameFile a, b
+	Array_ToTextFile secondarray,target
+End Sub
+
+Function RenameFile(filename1,filename2)
+	Dim fso 
+	Set fso = CreateObject("Scripting.FileSystemObject") 
+	'Build up the Date
+	Dim yearNum, monthNum, dayNum, hourNum, minNum, myFullDate, myFullTime, myFullDateA, myFullTimeA
+	mydate = now
+	mydate = split(mydate," ")
+	myFullDate = mydate(0)
+	myFullTime = mydate(1)
+	myFullDate = Split (myFullDate,"/")
+	myFullTime = Split (myFullTime,":")
+	yearNum = myFullDate(2)
+	monthNum = myFullDate(1)
+	dayNum = myFullDate(0)
+	hourNum = myFullTime(0)
+	minNum = myFullTime(1)
+	'MsgBox "y="&yearNum&" m="&monthNum&" day="&dayNum&" MyDate="&mydate(0)&" H="&hourNum&" M="&minNum
+	createdate = yearNum & monthNum & dayNum & "_" & hourNum & minNum
+	' Add the CreateDate and copy to the archive
+	MsgBox "Rename file "&filename1&" in "&filename2&"_"&createdate
+	fso.CopyFile filename1, filename2 &"_"& createdate
+	on error resume next
+	' some code
+	if( Err.number <> 0 ) then
+	    ' error handler -- you can use Err.raise() here to display your own errors
+	    MsgBox "Error = "&Err.number
+	    Err.clear()
+	else
+	    ' clean up things
+	end if
+	on error goto 0
+	  
+	Msgbox "Done"
+End function
+
+Sub ReadIniFile
+	Dim controllo, arr, karr, msg
+	Dim TILL, SHOP, P2P_GEN, P2P_ADDRESS, P2P_PORT, POS_GEN, POS_TID, POS_ADDRESS, POS_PORT
+	Const ForReading = 1
+	Const ForWriting = 2
+	Set fso = CreateObject("Scripting.FileSystemObject")
+	Set file = fso.OpenTextFile ("c:\temp\TCPOS.FrontEnd.ini",ForReading)
+	row = 0
+	Do Until file.AtEndOfStream
+	line = file.ReadLine
+	If not InStr(1, line, ";") = 1 Then
+		If Len(line) > 0 Then
+			arr = split(line, " ")
+			controllo = arr(0)
+				select case controllo
+				case "Till"
+					TILL = arr(1)
+					window.TillTextbox.value = TILL
+				Case "Shop"
+					SHOP = arr(1)
+					window.ShopTextbox.value = SHOP
+				case "Peer2Peer"
+					P2P_GEN = split(arr(1), "=")
+					P2P_ADDRESS = P2P_GEN(1)
+					window.P2P_AddressTextbox.value = P2P_ADDRESS
+					P2P_GEN = split(arr(3), "=")
+					P2P_PORT = P2P_GEN(1)
+					window.P2P_PORTTextbox.value = P2P_PORT
+				case "CREDITCARDAUTHORIZATION"
+					POS_GEN = split(arr(2), "=")
+					POS_TID = POS_GEN(1)
+					window.POS_TIDTextbox.value = POS_TID
+					POS_GEN = split(arr(4), "=")
+					POS_ADDRESS = POS_GEN(1)
+					window.POS_AddressTextbox.value = POS_ADDRESS
+					POS_GEN = split(arr(5), "=")
+					POS_PORT = POS_GEN(1)
+					window.POS_PortTextbox.value = P2P_PORT
+					end select
+			row = row + 1
+			end if
+		end if
+	Loop
+	file.Close
+End Sub
+
+
+Sub TestSub
+    Msgbox BasicTextbox.Value
+End Sub
+
+	
+Function MyFunc
+	'FILL CURRENT DATA IN HTML VIEW
+	newTILL = document.getElementById("TillTextbox").value
+	newSHOP = document.getElementById("ShopTextbox").value
+	newP2P_ADDRESS = document.getElementById("P2P_AddressTextbox").value
+	newP2P_PORT = document.getElementById("P2P_PORTTextbox").value
+	newTID = document.getElementById("POS_TIDTextbox").value
+	newTID_ADDRESS = document.getElementById("POS_AddressTextbox").value
+	newTID_PORT = document.getElementById("POS_PortTextbox").value
+	'MsgBox "new_TILL "&new_TILL
+	Const ForReading = 1
+	Const ForAppending = 8
+	
+	Dim objFSO, objFile, controllo, newTID, newTID_PORT, newTID_ADDRESS, newP2P_ADDRESS, newP2P_PORT
+	Dim listlines
+	Dim ListService(50)
+	'READ THE FILE 
+	strInputFilePath = "c:\temp\TCPOS.FrontEnd.ini"
+	Set objFSO = CreateObject("Scripting.FileSystemObject") 
+	Set objFile = objFSO.OpenTextFile(strInputFilePath, ForReading)
+	ReadTxtToArray = Split(objFile.ReadAll, vbCrLf)
+	objFile.Close
+	
+	arrFileName = ReadTxtToArray
+	'EXTRACT THE DATA  FROM THE INI FILE 
+	For i=0 to UBound(arrFileName)
+		controllo = arrFileName(i)
+		If InStr(controllo, "Till") <> 0 Then
+			startsWith = Left(controllo, Len(";")) = ";"
+			If Not startsWith Then
+				'MsgBox "StartWith : "&startsWith
+				controllo = "Till "&newTILL
+			End if
+		Elseif InStr(controllo, "Shop") <> 0 Then
+			controllo = "Shop "&newSHOP
+		ElseIf InStr(controllo, "Peer2Peer") <> 0 Then
+			startsWith = Left(controllo, Len(";")) = ";"
+			If Not startsWith Then
+				controllo = "Peer2Peer address="&newP2P_ADDRESS&" Registration=300 "&"Port="&newP2P_PORT
+			End if
+		ElseIf InStr(controllo, "CREDITCARDAUTHORIZATION") <> 0 then
+			controllo = "CREDITCARDAUTHORIZATION TYPE="".\Plugins\Plugin.IngenicoScambioImporto.FrontEnd.dll"" TERMINAL_ID="&newTID&" MODE=ETHERNET ADDRESS="&newTID_ADDRESS&" PORT="&newTID_PORT
+		End If
+		ListService(i)=controllo
+	Next
+	'RETURN ARRAY WITH DATA
+	MyFunc = ListService
+End Function
+
+
+Function Array_ToTextFile(a,path)  
+    Const ForWriting = 2  
+	Dim fso  
+	Dim writer  
+	Dim i  
+	Set fso = CreateObject("Scripting.FileSystemObject")  
+	Set writer = fso.OpenTextFile(path,ForWriting,True)  
+	For i = lbound(a) to ubound(a)  
+		writer.writeline a(i)  
+	Next  
+	writer.close  
+End Function  
+	
+</SCRIPT>
+
+<bdy onReadyStateChanged="VBScript:handler()">
+    <p><font face="Arial">TILL:        </font>
+    <input class="css-input" type="text" name="TillTextbox" size="30" id="TillTextbox"<P>
+    <p><font face="Arial">SHOP:        </font>
+    <input type="text" name="ShopTextbox" id="ShopTextbox" size="30"><P>
+    <p><font face="Arial">P2P_ADDRESS:        </font>
+    <input type="text" name="P2P_AddressTextbox" id="P2P_AddressTextbox" size="30"><P>
+    <p><font face="Arial">P2P_PORT:        </font>
+    <input type="text" name="P2P_PORTTextbox" id="P2P_PORTTextbox" size="30"><P>
+    <p><font face="Arial">POS_TID:        </font>
+    <input type="text" name="POS_TIDTextbox" id="POS_TIDTextbox" size="30"><P>
+    <p><font face="Arial">POS_ADDRESS:        </font>
+    <input type="text" name="POS_AddressTextbox" id="POS_AddressTextbox" size="30"><P>
+    <p><font face="Arial">POS_PORT:        </font>
+    <input type="text" name="POS_PortTextbox" id="POS_PortTextbox" size="30"><P>
+    <input id=runbutton  type="button" value="Leggi da file" name="run_button"  onClick="ReadIniFile">
+    <input id=runbutton  type="button" value="Scrivi file" name="run_button"  onClick="Main">
+</body>
