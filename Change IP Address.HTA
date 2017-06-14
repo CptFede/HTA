@@ -1,0 +1,173 @@
+<head>
+<title>IP config</title>
+<HTA:APPLICATION 
+     APPLICATIONNAME="Set IP config"
+     SCROLL="no"
+     SINGLEINSTANCE="yes">
+</head>
+
+<script language="VBScript">
+	Option Explicit
+	On Error Resume Next
+	Dim WshShell
+	Dim strComputer,objWMIService,colNetAdapters,objNetAdapter,errEnable,arrDNSServers,i,strDNS 
+	
+Sub Window_OnLoad
+	Set wshShell = CreateObject("WScript.Shell")
+	window.resizeTo 400,300
+    
+	CheckIP()
+	
+End Sub
+    
+Sub window_onunload()
+	Set WshShell = Nothing
+End Sub
+    
+Sub EnableDHCP()
+    
+	For Each objNetAdapter In colNetAdapters
+		If Instr(objNetAdapter.Description,"Ethernet") OR  Instr(objNetAdapter.Description,"Gigabit")then
+			errEnable = objNetAdapter.EnableDHCP()
+			If errEnable = 0 then 
+				MsgBox "DHCP enabled!" 
+			End If
+
+			arrDNSServers = Array()
+			objNetAdapter.SetDNSServerSearchOrder(arrDNSServers)
+		End IF
+	Next
+
+End Sub
+    
+Sub SetIP()
+        
+	Dim strIPAddress,strSubnetMask,strGateway,strGatewayMetric,arrDNSServers
+	Dim errGateways, errDNS, errEnable
+
+	If IPaddress.value <> "" AND Subnet.value <> "" AND Gateway.value <> "" AND DNSServer1.value <> "" AND DNSServer2.value <> "" then
+
+		strIPAddress = Array(IPaddress.value)
+		strSubnetMask = Array(Subnet.value)
+		strGateway = Array(Gateway.value)
+		strGatewayMetric = Array(1)
+		arrDNSServers = Array(DNSServer1.value , DNSServer2.value)
+ 
+	For Each objNetAdapter in colNetAdapters
+	'If Instr(objNetAdapter.Description,"Ethernet") OR  Instr(objNetAdapter.Description,"Gigabit")Then
+		If Instr(objNetAdapter.Description,"Intel") OR  Instr(objNetAdapter.Description,"Gigabit")Then
+	
+			errEnable = objNetAdapter.EnableStatic(strIPAddress, strSubnetMask)
+			errGateways = objNetAdapter.SetGateways(strGateway, strGatewaymetric)
+			If errEnable = 0 Then
+				MsgBox "The IP address has been changed."
+			Else
+				MsgBox "The IP address could not be changed."
+			End If
+
+			errDNS = objNetAdapter.SetDNSServerSearchOrder(arrDNSServers)
+		End If
+	Next
+
+	else
+		MsgBox "Please Input All field."
+	end IF
+
+End Sub
+	
+Sub CheckIP()
+
+	strComputer = "."
+
+	Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
+
+	Set colNetAdapters = objWMIService.ExecQuery("Select * from Win32_NetworkAdapterConfiguration where IPEnabled=TRUE")
+
+	For Each objNetAdapter in colNetAdapters
+	MsgBox objNetAdapter.Description
+	'MsgBox objNetAdapter.IPAddress
+		'If Instr(objNetAdapter.Description,"Intel(R) PRO/100 VE Network Connection") Then 'OR  Instr(objNetAdapter.Description,"Gigabit")then
+		If Instr(objNetAdapter.Description,"Intel") Then 'OR  Instr(objNetAdapter.Description,"Gigabit")then
+			'MsgBox objNetAdapter.IPAddress
+			If Not IsNull(objNetAdapter.IPAddress) Then
+				For i = 0 To UBound(objNetAdapter.IPAddress)
+					IPaddress.value =  objNetAdapter.IPAddress(i)
+				Next
+			End If
+ 
+			If Not IsNull(objNetAdapter.IPSubnet) Then
+				For i = 0 To UBound(objNetAdapter.IPSubnet)
+					Subnet.value =  objNetAdapter.IPSubnet(i)
+				Next
+			End If
+ 
+			If Not IsNull(objNetAdapter.DefaultIPGateway) Then
+				For i = 0 To UBound(objNetAdapter.DefaultIPGateway)
+					Gateway.value =  objNetAdapter.DefaultIPGateway(i)
+				Next
+			End If
+			If Not IsNull(objNetAdapter.DNSServerSearchOrder) Then
+				'objNetAdapter.DNSServerSearchOrder(arrDNSServers)
+				'strDNS  = objNetAdapter.DNSServerSearchOrder
+				'msgbox strDNS  
+				For each strDNS in objNetAdapter.DNSServerSearchOrder
+					DNSServer1.value=  strDNS 
+				Next
+				DNSServer1.value = objNetAdapter.DNSServerSearchOrder(0)
+				DNSServer2.value = objNetAdapter.DNSServerSearchOrder(1)
+			End If
+			'DNSServer1.value = objNetAdapter.DNSServerSearchOrder(0)
+			'DNSServer2.value = objNetAdapter.DNSServerSearchOrder(1)
+		End If
+		If objNetAdapter.DHCPEnabled then
+			MsgBox "DHCP Enabled!"
+		else
+			MsgBox "Static IP!"
+		end if
+	Next
+End Sub
+</script>
+<body STYLE
+
+' ="font:12 pt arial; color:white;
+' filter:progid:DXImageTransform.Microsoft.Gradient
+'(GradientType=1, StartColorStr='#000000', EndColorStr='#0000FF')">
+
+<a>IP config</a><p>
+<table>
+<tr>
+<td>IP address</td>
+<td>
+<input type="textbox" name="IPaddress" size="30">
+</td>
+</tr>
+<tr>
+<td>Subnet</td>
+<td>
+<input type="textbox" name="Subnet" size="30">
+</td>
+</tr>
+<tr>
+<td>Gateway</td>
+<td>
+<input type="textbox" name="Gateway" size="30">
+</td>
+</tr>
+<tr>
+<td>DNS Server 1</td>
+<td>
+<input type="textbox" name="DNSServer1" size="30">
+</td>
+</tr>
+<tr>
+<td>DNS Server 2</td>
+<td>
+<input type="textbox" name="DNSServer2" size="30">
+</td>
+</tr>
+</table>
+<input type="button" value="Static IP" name="run_button"  onClick="SetIP">
+<input type="button" value="Enable DHCP" name="run_button"  onClick="EnableDHCP">
+<input type="button" value="Refresh" name="run_button"  onClick="checkIP"><p> 
+
+</body>
