@@ -1,55 +1,97 @@
-﻿<html>
+<html>
 <head>
 <title>TCPOS Config Assistant</title>
 <HTA:APPLICATION
-  APPLICATIONNAME="TCPOS Config Assistant"
+  APPLICATIONNAME="TCPOS Config Assistant Prod"
+  SCROLL="NO"
   ID="objTest"
-  VERSION="1.0.0.0"
+  VERSION="1.0.0.1"
   ICON="Treetog-Junior-Box-config.ico"
   SINGLEINSTANCE="yes"/>
 </head>
 
 <SCRIPT LANGUAGE="VBScript">
+'*************************************************************************
+'Script Name: TCPOS Config Assistant Prod.hta
+'Author: Federico SIMONATO
+'Created: 24/05/2017
+'Delivery: 01/06/2017
+'Description: change some value into TCPOS.FrontEnd.ini and WE_Client_local.ini
+'*************************************************************************
+' 14/06/2017 Added update weepts_client_local.ini also [UPB]
+' 14/06/2017 Added to form the speification about winepts
+' 14/06/2017 Resize window to 450, 150
+
+'iniFrontEnd = "c:\temp\TCPOS.FrontEnd.ini"
+iniFrontEnd = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
+WinEptsFile = "c:\TCPOS.net\WinEpts\WE_Client_local.ini"
+'bkpFolder = "c:\Util-antiv"
+
 Function handler()
+	'isFile(iniFrontEnd)
+	'isFile(WinEptsFile)
 	ReadIniFile
 End Function
 
 Sub Window_OnLoad
-	ReadIniFile
 	window.resizeTo screen.availWidth/3,screen.availHeight/1.5
 	window.moveTo screen.availWidth/4,screen.availHeight/4
+	Window.resizeTo 450, 510
+'1243 710
+	'Msgresponse.write(Server.MapPath("."))
+	isFile(iniFrontEnd)
+	isFile(WinEptsFile)
+	'isFile(bkpFolder)
+	ReadIniFile
+	ReadWinEpts
+
+	'ReadWinEpts
 	'isFile
 	'ReadIniFile
 End Sub
 
-Sub isFile
+Sub isFile(nameFile)
 	Dim oFSO, oTxtFile   
 	Set oFSO = CreateObject("Scripting.FileSystemObject")     
-	If oFSO.FileExists("c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini")  then
-	       Msgbox "File Esiste",64,"OK"
-	Else 
-	      Set oTxtFile = oFSO.CreateTextFile("c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini")  
-	      Msgbox "Attenzione il file non esiste!!!",48,"Errore"
+	If Not oFSO.FileExists(nameFile)  then
+	      Msgbox "Attenzione il file "&nameFile&" non � stato trovato!!!",48,"Errore"
+	      'isFile = False
+	      'MsgBox isFile
+	      window.close()
 	End If
+	
 End Sub
 
 Sub Main
 	'PASS THE FILENAME TO THR FUNCTION
-	MyFunc '("c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini")
+	'iniFrontEnd = "c:\temp\TCPOS.FrontEnd.ini"
+	'WinEptsFile = "c:\temp\WE_Client_local.ini"
+	'If Not isFile(iniFrontEnd) Then MsgBox "will be exit"
+
+	'If Not isFile(WinEptsFile) Then MsgBox "WinEpts ini file not found!!!!"
+
+	MyFunc 
 	secondarray = MyFunc
-	target = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
-	'For i = lbound(secondarray) to ubound(secondarray)  
-		'MsgBox secondarray(i)  
-	'Next  
-	'MsgBox "Rename file c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini in c:\TCPOS.net\Frontend\TCPOS.FrontEnd.old"
-	
-	a = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
-	b = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.old"
-	RenameFile a, b
-	Array_ToTextFile secondarray,target
+	'target = iniFrontEnd
+	RenameFile iniFrontEnd
+	RenameFile WinEptsFile
+	'MsgBox "iniFrontEnd = "&iniFrontEnd
+	Array_ToTextFile secondarray,iniFrontEnd
+	WriteWinEpts
+	'isFile(WinEptsFile)
+	'WriteIni (WinEptsFile,WinEpts,NodeId,WINEPTS_NodeIdTextbox.value)
+	'WriteIni (WinEptsFile,WinEpts,PortId,WINEPTS_PortIdTextbox.value)
+	'WriteIni (WinEptsFile,UPB,NodeId,WINEPTS_NodeIdTextbox.value)
+	'WriteIni (WinEptsFile,UPB,PortId,WINEPTS_PortIdTextbox.value)
 End Sub
 
-Function RenameFile(filename1,filename2)
+Function RenameFile(filename1)
+	Set objShell = CreateObject("WScript.Shell")
+	Set objFSO = CreateObject("Scripting.FileSystemObject")
+	strScriptPath = objShell.CurrentDirectory
+	'MsgBox strScriptPath
+	bkpFolder = strScriptPath
+	'MsgBox bkpFolder
 	Dim fso 
 	Set fso = CreateObject("Scripting.FileSystemObject") 
 	'Build up the Date
@@ -68,8 +110,10 @@ Function RenameFile(filename1,filename2)
 	'MsgBox "y="&yearNum&" m="&monthNum&" day="&dayNum&" MyDate="&mydate(0)&" H="&hourNum&" M="&minNum
 	createdate = yearNum & monthNum & dayNum & "_" & hourNum & minNum
 	' Add the CreateDate and copy to the archive
-	MsgBox "Rename file "&filename1&" in "&filename2&"_"&createdate
-	fso.CopyFile filename1, filename2 &"_"& createdate
+	'MsgBox "Rinomino il file: "&filename1&" in "&bkpFolder&"\"&filename1&"_"&createdate
+	Set objFile = fso.GetFile(filename1)
+	MsgBox "Backup file "&fso.GetFileName(objFile)&" in "&bkpFolder&"\"&fso.GetFileName(objFile)&"_"& createdate
+	fso.CopyFile filename1, bkpFolder&"\"&fso.GetFileName(objFile)&"_"& createdate
 	on error resume next
 	' some code
 	if( Err.number <> 0 ) then
@@ -81,7 +125,7 @@ Function RenameFile(filename1,filename2)
 	end if
 	on error goto 0
 	  
-	Msgbox "Done"
+	'Msgbox "Done"
 End function
 
 Sub ReadIniFile
@@ -90,7 +134,7 @@ Sub ReadIniFile
 	Const ForReading = 1
 	Const ForWriting = 2
 	Set fso = CreateObject("Scripting.FileSystemObject")
-	Set file = fso.OpenTextFile ("c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini",ForReading)
+	Set file = fso.OpenTextFile (iniFrontEnd,ForReading)
 	row = 0
 	Do Until file.AtEndOfStream
 	line = file.ReadLine
@@ -120,16 +164,35 @@ Sub ReadIniFile
 					POS_ADDRESS = POS_GEN(1)
 					window.POS_AddressTextbox.value = POS_ADDRESS
 					POS_GEN = split(arr(5), "=")
+					'MsgBox POS_GEN(1)
 					POS_PORT = POS_GEN(1)
-					window.POS_PortTextbox.value = P2P_PORT
+					'MsgBox POS_PORT
+					window.POS_PORTTextbox.value = P2P_PORT
 					end select
 			row = row + 1
 			end if
 		end if
 	Loop
 	file.Close
+	ReadWinEpts
 End Sub
 
+Sub ReadWinEpts
+	window.WINEPTS_NodeIdTextbox.value = ReadIni(WinEptsFile,"WINEPTS","NodeId")
+	window.WINEPTS_PortIdTextbox.value = ReadIni(WinEptsFile,"WINEPTS","PortId")
+	'MsgBox ReadIni(WinEptsFile,"WINEPTS","NodeId")
+End Sub
+
+Function WriteWinEpts
+	Dim newWINEPTS_NodeIdTextbox, newWINEPTS_PortIdTextbox
+	newWINEPTS_NodeIdTextbox = document.getElementById("WINEPTS_NodeIdTextbox").value
+	newWINEPTS_PortIdTextbox = document.getElementById("WINEPTS_PortIdTextbox").value
+	'(myFilePath, mySection, myKey, myValue)
+	WriteIni WinEptsFile, "WinEpts", "NodeId", newWINEPTS_NodeIdTextbox
+	WriteIni WinEptsFile, "WinEpts", "PortId", newWINEPTS_PortIdTextbox
+	WriteIni WinEptsFile, "UPB", "NodeId", newWINEPTS_NodeIdTextbox
+	WriteIni WinEptsFile, "UPB", "PortId", newWINEPTS_PortIdTextbox
+End Function
 
 Sub TestSub
     Msgbox BasicTextbox.Value
@@ -137,6 +200,9 @@ End Sub
 
 	
 Function MyFunc
+	Dim objFSO, objFile, controllo, newTID, newTID_PORT, newTID_ADDRESS, newP2P_ADDRESS, newP2P_PORT
+	Dim listlines
+	Dim ListService(50)
 	'FILL CURRENT DATA IN HTML VIEW
 	newTILL = document.getElementById("TillTextbox").value
 	newSHOP = document.getElementById("ShopTextbox").value
@@ -145,24 +211,25 @@ Function MyFunc
 	newTID = document.getElementById("POS_TIDTextbox").value
 	newTID_ADDRESS = document.getElementById("POS_AddressTextbox").value
 	newTID_PORT = document.getElementById("POS_PortTextbox").value
+	newWINEPTS_NodeIdTextbox = document.getElementById("WINEPTS_NodeIdTextbox").value
+	newWINEPTS_PortIdTextbox = document.getElementById("WINEPTS_PortIdTextbox").value
 	'MsgBox "new_TILL "&new_TILL
 	Const ForReading = 1
 	Const ForAppending = 8
 	
-	Dim objFSO, objFile, controllo, newTID, newTID_PORT, newTID_ADDRESS, newP2P_ADDRESS, newP2P_PORT
-	Dim listlines
-	Dim ListService(50)
+
 	'READ THE FILE 
-	strInputFilePath = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
+	strInputFilePath = iniFrontEnd
 	Set objFSO = CreateObject("Scripting.FileSystemObject") 
 	Set objFile = objFSO.OpenTextFile(strInputFilePath, ForReading)
 	ReadTxtToArray = Split(objFile.ReadAll, vbCrLf)
 	objFile.Close
 	arrFileName = ReadTxtToArray
-	upperbound = UBound(arrFileName)-1
+	upperbound = UBound(arrFileName) -1
 	'EXTRACT THE DATA  FROM THE INI FILE 
 	For i=0 to upperbound
 		controllo = arrFileName(i)
+		'MsgBox i
 		If InStr(controllo, "Till") <> 0 Then
 			startsWith = Left(controllo, Len(";")) = ";"
 			If Not startsWith Then
@@ -199,6 +266,223 @@ Function Array_ToTextFile(a,path)
 	writer.close  
 End Function  
 	
+Function WriteIni(myFilePath, mySection, myKey, myValue)
+    ' This subroutine writes a value to an INI file
+    '
+    ' Arguments:
+    ' myFilePath  [string]  the (path and) file name of the INI file
+    ' mySection   [string]  the section in the INI file to be searched
+    ' myKey       [string]  the key whose value is to be written
+    ' myValue     [string]  the value to be written (myKey will be
+    '                       deleted if myValue is <DELETE_THIS_VALUE>)
+    '
+    ' Returns:
+    ' N/A
+    '
+    ' CAVEAT:     WriteIni function needs ReadIni function to run
+    '
+    ' Written by Keith Lacelle
+    ' Modified by Denis St-Pierre, Johan Pol and Rob van der Woude
+
+    Const ForReading   = 1
+    Const ForWriting   = 2
+    Const ForAppending = 8
+
+    Dim blnInSection, blnKeyExists, blnSectionExists, blnWritten
+    Dim intEqualPos
+    Dim objFSO, objNewIni, objOrgIni, wshShell
+    Dim strFilePath, strFolderPath, strKey, strLeftString
+    Dim strLine, strSection, strTempDir, strTempFile, strValue
+
+    strFilePath = Trim( myFilePath )
+    strSection  = Trim( mySection )
+    strKey      = Trim( myKey )
+    strValue    = Trim( myValue )
+
+    Set objFSO   = CreateObject( "Scripting.FileSystemObject" )
+    Set wshShell = CreateObject( "WScript.Shell" )
+
+    strTempDir  = wshShell.ExpandEnvironmentStrings( "%TEMP%" )
+    strTempFile = objFSO.BuildPath( strTempDir, objFSO.GetTempName )
+
+    Set objOrgIni = objFSO.OpenTextFile( strFilePath, ForReading, True )
+    Set objNewIni = objFSO.CreateTextFile( strTempFile, False, False )
+
+    blnInSection     = False
+    blnSectionExists = False
+    ' Check if the specified key already exists
+    blnKeyExists     = ( ReadIni( strFilePath, strSection, strKey ) <> "" )
+    blnWritten       = False
+
+    ' Check if path to INI file exists, quit if not
+    strFolderPath = Mid( strFilePath, 1, InStrRev( strFilePath, "\" ) )
+    If Not objFSO.FolderExists ( strFolderPath ) Then
+        WScript.Echo "Error: WriteIni failed, folder path (" _
+                   & strFolderPath & ") to ini file " _
+                   & strFilePath & " not found!"
+        Set objOrgIni = Nothing
+        Set objNewIni = Nothing
+        Set objFSO    = Nothing
+        WScript.Quit 1
+    End If
+
+    While objOrgIni.AtEndOfStream = False
+        strLine = Trim( objOrgIni.ReadLine )
+        If blnWritten = False Then
+            If LCase( strLine ) = "[" & LCase( strSection ) & "]" Then
+                blnSectionExists = True
+                blnInSection = True
+            ElseIf InStr( strLine, "[" ) = 1 Then
+                blnInSection = False
+            End If
+        End If
+
+        If blnInSection Then
+            If blnKeyExists Then
+                intEqualPos = InStr( 1, strLine, "=", vbTextCompare )
+                If intEqualPos > 0 Then
+                    strLeftString = Trim( Left( strLine, intEqualPos - 1 ) )
+                    If LCase( strLeftString ) = LCase( strKey ) Then
+                        ' Only write the key if the value isn't empty
+                        ' Modification by Johan Pol
+                        If strValue <> "<DELETE_THIS_VALUE>" Then
+                            objNewIni.WriteLine strKey & "=" & strValue
+                        End If
+                        blnWritten   = True
+                        blnInSection = False
+                    End If
+                End If
+                If Not blnWritten Then
+                    objNewIni.WriteLine strLine
+                End If
+            Else
+                objNewIni.WriteLine strLine
+                    ' Only write the key if the value isn't empty
+                    ' Modification by Johan Pol
+                    If strValue <> "<DELETE_THIS_VALUE>" Then
+                        objNewIni.WriteLine strKey & "=" & strValue
+                    End If
+                blnWritten   = True
+                blnInSection = False
+            End If
+        Else
+            objNewIni.WriteLine strLine
+        End If
+    Wend
+
+    If blnSectionExists = False Then ' section doesn't exist
+        objNewIni.WriteLine
+        objNewIni.WriteLine "[" & strSection & "]"
+            ' Only write the key if the value isn't empty
+            ' Modification by Johan Pol
+            If strValue <> "<DELETE_THIS_VALUE>" Then
+                objNewIni.WriteLine strKey & "=" & strValue
+            End If
+    End If
+
+    objOrgIni.Close
+    objNewIni.Close
+
+    ' Delete old INI file
+    objFSO.DeleteFile strFilePath, True
+    ' Rename new INI file
+    objFSO.MoveFile strTempFile, strFilePath
+
+    Set objOrgIni = Nothing
+    Set objNewIni = Nothing
+    Set objFSO    = Nothing
+    Set wshShell  = Nothing
+End Function
+	
+Function ReadIni( myFilePath, mySection, myKey )
+    ' This function returns a value read from an INI file
+    '
+    ' Arguments:
+    ' myFilePath  [string]  the (path and) file name of the INI file
+    ' mySection   [string]  the section in the INI file to be searched
+    ' myKey       [string]  the key whose value is to be returned
+    '
+    ' Returns:
+    ' the [string] value for the specified key in the specified section
+    '
+    ' CAVEAT:     Will return a space if key exists but value is blank
+    '
+    ' Written by Keith Lacelle
+    ' Modified by Denis St-Pierre and Rob van der Woude
+
+    Const ForReading   = 1
+    Const ForWriting   = 2
+    Const ForAppending = 8
+
+    Dim intEqualPos
+    Dim objFSO, objIniFile
+    Dim strFilePath, strKey, strLeftString, strLine, strSection
+
+    Set objFSO = CreateObject( "Scripting.FileSystemObject" )
+
+    ReadIni     = ""
+    strFilePath = Trim( myFilePath )
+    strSection  = Trim( mySection )
+    strKey      = Trim( myKey )
+
+    If objFSO.FileExists( strFilePath ) Then
+        Set objIniFile = objFSO.OpenTextFile( strFilePath, ForReading, False )
+        Do While objIniFile.AtEndOfStream = False
+            strLine = Trim( objIniFile.ReadLine )
+
+            ' Check if section is found in the current line
+            If LCase( strLine ) = "[" & LCase( strSection ) & "]" Then
+                strLine = Trim( objIniFile.ReadLine )
+
+                ' Parse lines until the next section is reached
+                Do While Left( strLine, 1 ) <> "["
+                    ' Find position of equal sign in the line
+                    intEqualPos = InStr( 1, strLine, "=", 1 )
+                    If intEqualPos > 0 Then
+                        strLeftString = Trim( Left( strLine, intEqualPos - 1 ) )
+                        ' Check if item is found in the current line
+                        If LCase( strLeftString ) = LCase( strKey ) Then
+                            ReadIni = Trim( Mid( strLine, intEqualPos + 1 ) )
+                            ' In case the item exists but value is blank
+                            If ReadIni = "" Then
+                                ReadIni = " "
+                            End If
+                            ' Abort loop when item is found
+                            Exit Do
+                        End If
+                    End If
+
+                    ' Abort if the end of the INI file is reached
+                    If objIniFile.AtEndOfStream Then Exit Do
+
+                    ' Continue with next line
+                    strLine = Trim( objIniFile.ReadLine )
+                Loop
+            Exit Do
+            End If
+        Loop
+        objIniFile.Close
+    Else
+        WScript.Echo strFilePath & " doesn't exists. Exiting..."
+        Wscript.Quit 1
+    End If
+End Function
+	
+Sub RenameComputer	
+	strNewName = Trim(txt_newcomputername.Value)
+	If strNewName <> "" Then
+		Set oWMI = GetObject("winmgmts:\\.\root\cimv2")
+		For Each oCmp in oWMI.InstancesOf("Win32_ComputerSystem")
+			sReturn = oCmp.Rename(strNewName)
+		Next
+		Set objOSSet = GetObject("winmgmts:{(RemoteShutdown)}//./root/cimv2").ExecQuery("select * from Win32_OperatingSystem where Primary=true")
+		For Each objOS In objOSSet
+			objOS.Reboot()
+		Next
+	Else
+		MsgBox "Please enter a computer name."
+	End If
+End Sub
 </SCRIPT>
 
 <style>
@@ -206,42 +490,113 @@ label {
   display: inline-block;
   width: 140px;
   text-align: right;
-}​
+  color: white;
+  font-family: arial;
+}
+
+.button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 150px 320px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
 </style>
 
 
 
-<body onReadyStateChanged="VBScript:handler()">
+<body onReadyStateChanged="VBScript:handler()" background="pict/Together_Commerce_Alliance_640x480.jpg">
+<table>
+<tr>
 <div class="block">
-    <label>TILL:        </label>
-    <input class="css-input" type="text" name="TillTextbox" size="30" id="TillTextbox"/>
-    </div>
+    <td>
+       <label>TILL:        </label>
+    </td><td>
+       <input class="css-input" type="text" name="TillTextbox" size="30" id="TillTextbox"/>
+    </td><td></td>
+</div>
+</tr>
+<tr>
 <div class="block">
-    <label>SHOP:        </label>
+    <td>
+      <label>SHOP:        </label>
+    </td><td>
     <input type="text" name="ShopTextbox" id="ShopTextbox" size="30"/>
+    </td><td></td>
 </div>
+</tr>
+<tr>
 <div class="block">
+    <td>
     <label>P2P_ADDRESS:        </label>
+    </td><td>
     <input type="text" name="P2P_AddressTextbox" id="P2P_AddressTextbox" size="30"/>
+    </td><td></td>
 </div>
+</tr>
+<tr>
 <div class="block">
+    <td>
     <label>P2P_PORT:        </label>
+    </td><td>
     <input type="text" name="P2P_PORTTextbox" id="P2P_PORTTextbox" size="30"/>
+    </td><td></td>
 </div>
-<P>
+</tr>
+<tr>
 <div class="block">
+    <td>
     <label>POS_TID:        </label>
+    </td><td>
     <input type="text" name="POS_TIDTextbox" id="POS_TIDTextbox" size="30"/>
+    </td><td></td>
 </div>
+</tr>
+<tr>
 <div class="block">
-    <label>POS_ADDRESS:        </label>
-    <input type="text" name="POS_AddressTextbox" id="POS_AddressTextbox" size="30"/>
-</div>
-<div class="block">
+    <td>
     <label>POS_PORT:        </label>
+    </td><td>
     <input type="text" name="POS_PortTextbox" id="POS_PortTextbox" size="30"/>
+    </td><td></td>
 </div>
-<br>
-    <input id=runbutton  type="button" value="Leggi da file" name="run_button"  onClick="ReadIniFile">
-    <input id=runbutton  type="button" value="Scrivi file" name="run_button"  onClick="Main">
+</tr>
+<tr>
+<div class="block">
+    <td>
+    <label>POS_ADDRESS:        </label>
+    </td><td>
+    <input type="text" name="POS_AddressTextbox" id="POS_AddressTextbox" size="30"/>
+    </td><td></td>
+</div>
+</tr>
+<tr>
+<div class="block">
+    <td>
+    <label>WINEPTS NodeId:(codice cassa)        </label>
+    </td><td>
+    <input type="text" name="WINEPTS_NodeIdTextbox" id="WINEPTS_NodeIdTextbox" size="30"/>
+    </td><td></td>
+</div>
+</tr>
+<tr>
+<div class="block">
+    <td>
+    <label>WINEPTS PortId:(codice negozio)        </label>
+    </td><td>
+    <input type="text" name="WINEPTS_PortIdTextbox" id="WINEPTS_PortIdTextbox" size="30"/>
+    </td><td></td>
+</div>
+</tr>
+
+<tr>
+<td></td><br/><br/><td>
+    <input id=runbutton  type="button" value="Leggi da file" name="run_button"  onClick="ReadIniFile"/>
+    <input id=runbutton  type="button" value="Scrivi file" name="run_button"  onClick="Main"/>
+</td>
+</tr>
+</table>
 </body>
