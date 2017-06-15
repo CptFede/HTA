@@ -1,16 +1,16 @@
 <html>
 <head>
-<title>TCPOS Config Assistant</title>
+<title>TCPOS Config Assistant Prod v.2</title>
 <HTA:APPLICATION
-  APPLICATIONNAME="TCPOS Config Assistant Prod"
-  SCROLL="NO"
-  ID="objTest"
-  VERSION="1.0.0.1"
+  APPLICATIONNAME="TCPOS Config Assistant Prod 2"
+  SCROLL="YES"
+  ID="TCPOS Config Assistant Prod 2"
+  VERSION="2.0.0.0"
   ICON="Treetog-Junior-Box-config.ico"
   SINGLEINSTANCE="yes"/>
 </head>
 
-<SCRIPT LANGUAGE="VBScript">
+<script language="VBScript">
 '*************************************************************************
 'Script Name: TCPOS Config Assistant Prod.hta
 'Author: Federico SIMONATO
@@ -22,10 +22,42 @@
 ' 14/06/2017 Added to form the speification about winepts
 ' 14/06/2017 Resize window to 450, 150
 
-'iniFrontEnd = "c:\temp\TCPOS.FrontEnd.ini"
-iniFrontEnd = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
-WinEptsFile = "c:\TCPOS.net\WinEpts\WE_Client_local.ini"
-'bkpFolder = "c:\Util-antiv"
+
+Option Explicit
+On Error Resume Next
+Dim WshShell
+Dim strComputer,objWMIService,colNetAdapters,objNetAdapter,errEnable,arrDNSServers,i, strDNS
+Dim fso,file,row, line, arr, objNetwork, txt_newcomputername, ComputerName
+Dim objFSO, objFile, controllo, newTID, newTID_PORT, newTID_ADDRESS, newP2P_ADDRESS, newP2P_PORT, newTill, newSHOP
+Dim newWINEPTS_NodeIdTextbox, newWINEPTS_PortIdTextbox, strInputFilePath, ReadTxtToArray, upperbound, startsWith 
+Dim listlines, arrFileName, secondarray
+Dim ListService(50)
+Const iniFrontEnd = "c:\TCPOS.net\Frontend\TCPOS.FrontEnd.ini"
+Const WinEptsFile = "c:\TCPOS.net\WinEpts\WE_Client_local.ini"
+'Const fso = CreateObject("Scripting.FileSystemObject")
+
+
+Sub Window_OnLoad
+	window.resizeTo 600,700
+	Set WshShell = CreateObject("WScript.Shell")
+	isFile(iniFrontEnd)
+	isFile(WinEptsFile)
+	ReadIniFile
+	ReadWinEpts
+	MyComputerName()
+	CheckIP()
+	
+  'This method will be called when the application loads
+  'Add your code here
+End Sub
+
+Function MyComputerName()
+	Set objNetwork = CreateObject("WScript.Network")
+	'txt_newcomputername.value = objNetwork.ComputerName
+	'MsgBox objNetwork.ComputerName
+	namePc.value = objNetwork.ComputerName
+End Function
+
 
 Function handler()
 	'isFile(iniFrontEnd)
@@ -33,23 +65,7 @@ Function handler()
 	ReadIniFile
 End Function
 
-Sub Window_OnLoad
-	window.resizeTo screen.availWidth/3,screen.availHeight/1.5
-	window.moveTo screen.availWidth/4,screen.availHeight/4
-	Window.resizeTo 450, 510
-'1243 710
-	'Msgresponse.write(Server.MapPath("."))
-	isFile(iniFrontEnd)
-	isFile(WinEptsFile)
-	'isFile(bkpFolder)
-	ReadIniFile
-	ReadWinEpts
-
-	'ReadWinEpts
-	'isFile
-	'ReadIniFile
-End Sub
-
+'##########################################################################################
 Sub isFile(nameFile)
 	Dim oFSO, oTxtFile   
 	Set oFSO = CreateObject("Scripting.FileSystemObject")     
@@ -60,6 +76,13 @@ Sub isFile(nameFile)
 	      window.close()
 	End If
 	
+End Sub
+
+Sub Refresh
+	ReadIniFile
+	ReadWinEpts
+	MyComputerName()
+	CheckIP()
 End Sub
 
 Sub Main
@@ -78,14 +101,18 @@ Sub Main
 	'MsgBox "iniFrontEnd = "&iniFrontEnd
 	Array_ToTextFile secondarray,iniFrontEnd
 	WriteWinEpts
+	SetIP()
+	RenameComputer
 	'isFile(WinEptsFile)
 	'WriteIni (WinEptsFile,WinEpts,NodeId,WINEPTS_NodeIdTextbox.value)
 	'WriteIni (WinEptsFile,WinEpts,PortId,WINEPTS_PortIdTextbox.value)
 	'WriteIni (WinEptsFile,UPB,NodeId,WINEPTS_NodeIdTextbox.value)
 	'WriteIni (WinEptsFile,UPB,PortId,WINEPTS_PortIdTextbox.value)
+	RebootButton
 End Sub
 
 Function RenameFile(filename1)
+Dim objShell, objFSO, strScriptPath, bkpFolder, createdate, mydate
 	Set objShell = CreateObject("WScript.Shell")
 	Set objFSO = CreateObject("Scripting.FileSystemObject")
 	strScriptPath = objShell.CurrentDirectory
@@ -467,6 +494,7 @@ Function ReadIni( myFilePath, mySection, myKey )
         Wscript.Quit 1
     End If
 End Function
+'####################################################################################
 	
 Sub RenameComputer	
 	strNewName = Trim(txt_newcomputername.Value)
@@ -483,8 +511,131 @@ Sub RenameComputer
 		MsgBox "Please enter a computer name."
 	End If
 End Sub
-</SCRIPT>
 
+
+Sub SetIP()
+        
+	Dim strIPAddress,strSubnetMask,strGateway,strGatewayMetric,arrDNSServers
+	Dim errGateways, errDNS, errEnable
+
+	If IPaddress.value <> "" AND Subnet.value <> "" AND Gateway.value <> "" AND DNSServer1.value <> "" AND DNSServer2.value <> "" then
+
+		strIPAddress = Array(IPaddress.value)
+		strSubnetMask = Array(Subnet.value)
+		strGateway = Array(Gateway.value)
+		strGatewayMetric = Array(1)
+		arrDNSServers = Array(DNSServer1.value , DNSServer2.value)
+ 
+	For Each objNetAdapter in colNetAdapters
+	'If Instr(objNetAdapter.Description,"Ethernet") OR  Instr(objNetAdapter.Description,"Gigabit")Then
+		If Instr(objNetAdapter.Description,"Intel") OR  Instr(objNetAdapter.Description,"Gigabit")Then
+	
+			errEnable = objNetAdapter.EnableStatic(strIPAddress, strSubnetMask)
+			errGateways = objNetAdapter.SetGateways(strGateway, strGatewaymetric)
+			If errEnable = 0 Then
+				MsgBox "The IP address has been changed."
+			Else
+				MsgBox "The IP address could not be changed."
+			End If
+
+			errDNS = objNetAdapter.SetDNSServerSearchOrder(arrDNSServers)
+		End If
+	Next
+
+	else
+		MsgBox "Please Input All field."
+	end IF
+
+End Sub
+	
+Sub CheckIP()
+
+	strComputer = "."
+
+	Set objWMIService = GetObject("winmgmts:" & "{impersonationLevel=impersonate}!\\" & strComputer & "\root\cimv2")
+
+	Set colNetAdapters = objWMIService.ExecQuery("Select * from Win32_NetworkAdapterConfiguration where IPEnabled=TRUE")
+
+	For Each objNetAdapter in colNetAdapters
+	'MsgBox objNetAdapter.Description
+	'MsgBox objNetAdapter.IPAddress
+		'If Instr(objNetAdapter.Description,"Intel(R) PRO/100 VE Network Connection") Then 'OR  Instr(objNetAdapter.Description,"Gigabit")then
+		If Instr(objNetAdapter.Description,"Intel") OR Instr(objNetAdapter.Description,"Gigabit") then
+			'MsgBox objNetAdapter.IPAddress
+			If Not IsNull(objNetAdapter.IPAddress) Then
+				For i = 0 To UBound(objNetAdapter.IPAddress)
+					IPaddress.value =  objNetAdapter.IPAddress(i)
+				Next
+			End If
+ 
+			If Not IsNull(objNetAdapter.IPSubnet) Then
+				For i = 0 To UBound(objNetAdapter.IPSubnet)
+					Subnet.value =  objNetAdapter.IPSubnet(i)
+				Next
+			End If
+ 
+			If Not IsNull(objNetAdapter.DefaultIPGateway) Then
+				For i = 0 To UBound(objNetAdapter.DefaultIPGateway)
+					Gateway.value =  objNetAdapter.DefaultIPGateway(i)
+				Next
+			End If
+			If Not IsNull(objNetAdapter.DNSServerSearchOrder) Then
+				'objNetAdapter.DNSServerSearchOrder(arrDNSServers)
+				'strDNS  = objNetAdapter.DNSServerSearchOrder
+				'msgbox strDNS  
+				For each strDNS in objNetAdapter.DNSServerSearchOrder
+					DNSServer1.value=  strDNS 
+				Next
+				DNSServer1.value = objNetAdapter.DNSServerSearchOrder(0)
+				DNSServer2.value = objNetAdapter.DNSServerSearchOrder(1)
+			End If
+			'DNSServer1.value = objNetAdapter.DNSServerSearchOrder(0)
+			'DNSServer2.value = objNetAdapter.DNSServerSearchOrder(1)
+		End If
+		'If objNetAdapter.DHCPEnabled then
+			'MsgBox "DHCP Enabled!"
+		'else
+			'MsgBox "Static IP!"
+		'end if
+	Next
+End Sub
+
+Sub RenameComputer	
+	Dim strNewName, oWMI, oCmp, sReturn 
+	strNewName = Trim(namePc.Value)
+	If strNewName <> "" Then
+		Set oWMI = GetObject("winmgmts:\\.\root\cimv2")
+		For Each oCmp in oWMI.InstancesOf("Win32_ComputerSystem")
+			sReturn = oCmp.Rename(strNewName)
+		Next
+		MsgBox "Computer è stato rinominato in "&strNewName
+	Else
+		MsgBox "Inserisci un nome in PC Name"
+	End If
+End Sub
+
+Sub RebootButton
+	Dim sh
+	set sh = CreateObject("Shell.Application")
+	sh.ShellExecute "c:\windows\system32\Shutdown.exe", "/r /f /t 20"
+end sub
+
+Sub RebootButton1
+	
+	DIM objItem, colItems
+	strComputer = namePc.InnerHTML
+	IF MSGBOX("Are you sure you want to reboot '" & strComputer & "'?",vbYesNo+vbExclamation,"Confirm Reboot") = vbYes THEN
+		SET colItems = objWMIService.ExecQuery("Select * from Win32_OperatingSystem")
+		FOR EACH objItem in colItems
+			objItem.Reboot()
+		NEXT
+			MSGBOX "Computer '" & strComputer & "' has been rebooted",vbOKOnly+vbInformation
+	END IF
+
+End Sub
+
+
+</script>
 <style>
 label {
   display: inline-block;
@@ -497,7 +648,7 @@ label {
 .button {
     background-color: #4CAF50; /* Green */
     border: none;
-    color: white;
+    color: black;
     padding: 150px 320px;
     text-align: center;
     text-decoration: none;
@@ -505,98 +656,28 @@ label {
     font-size: 16px;
 }
 </style>
+<body background="pict/Together_Commerce_Alliance_640x480.jpg">
 
-
-
-<body onReadyStateChanged="VBScript:handler()" background="pict/Together_Commerce_Alliance_640x480.jpg">
-<table>
+<!--Add your controls here-->
+<table style="height: 100px; float: left;" border="0" width="242" cellpadding="20">
+<tbody>
 <tr>
-<div class="block">
-    <td>
-       <label>TILL:        </label>
-    </td><td>
-       <input class="css-input" type="text" name="TillTextbox" size="30" id="TillTextbox"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-      <label>SHOP:        </label>
-    </td><td>
-    <input type="text" name="ShopTextbox" id="ShopTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>P2P_ADDRESS:        </label>
-    </td><td>
-    <input type="text" name="P2P_AddressTextbox" id="P2P_AddressTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>P2P_PORT:        </label>
-    </td><td>
-    <input type="text" name="P2P_PORTTextbox" id="P2P_PORTTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>POS_TID:        </label>
-    </td><td>
-    <input type="text" name="POS_TIDTextbox" id="POS_TIDTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>POS_PORT:        </label>
-    </td><td>
-    <input type="text" name="POS_PortTextbox" id="POS_PortTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>POS_ADDRESS:        </label>
-    </td><td>
-    <input type="text" name="POS_AddressTextbox" id="POS_AddressTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>WINEPTS NodeId:(codice cassa)        </label>
-    </td><td>
-    <input type="text" name="WINEPTS_NodeIdTextbox" id="WINEPTS_NodeIdTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-<tr>
-<div class="block">
-    <td>
-    <label>WINEPTS PortId:(codice negozio)        </label>
-    </td><td>
-    <input type="text" name="WINEPTS_PortIdTextbox" id="WINEPTS_PortIdTextbox" size="30"/>
-    </td><td></td>
-</div>
-</tr>
-
-<tr>
-<td></td><br/><br/><td>
-    <input id=runbutton  type="button" value="Leggi da file" name="run_button"  onClick="ReadIniFile"/>
-    <input id=runbutton  type="button" value="Scrivi file" name="run_button"  onClick="Main"/>
+<td><label>PC Name</label><input id="namePc" name="ComputerName" size="30" type="textbox" /> <label>IP address</label> <input id="IPaddress" name="IPaddress" size="30" type="textbox" /> <label>Subnet</label><input id="Subnet" name="Subnet" size="30" type="textbox" /> <label>Gateway</label><input id="Gateway" name="Gateway" size="30" type="textbox" /> <label>DNS Server 1 </label><input id="DNSServer1" name="DNSServer1" size="30" type="textbox" /> <label>DNS Server 2</label><input id="DNSServer2" name="DNSServer2" size="30" type="textbox" />
+<p>&nbsp;</p>
 </td>
+<td><label>TILL</label><input id="TillTextbox" name="TillTextbox" size="30" type="text" /> <label>SHOP</label><input id="ShopTextbox" name="ShopTextbox" size="30" type="text" /> <label>P2P_ADDRESS </label><input id="P2P_AddressTextbox" name="P2P_AddressTextbox" size="30" type="text" /> <label>P2P_PORT </label><input id="P2P_PORTTextbox" name="P2P_PORTTextbox" size="30" type="text" /> <label>POS_TID </label><input id="POS_TIDTextbox" name="POS_TIDTextbox" size="30" type="text" /> <label>POS_PORT </label><input id="POS_PortTextbox" name="POS_PortTextbox" size="30" type="text" /> <label>POS_ADDRESS </label><input id="POS_AddressTextbox" name="POS_AddressTextbox" size="30" type="text" /> <label>WINEPTS NodeId:(codice cassa) </label><input id="WINEPTS_NodeIdTextbox" name="WINEPTS_NodeIdTextbox" size="30" type="text" /> <label>WINEPTS PortId:(codice negozio) </label><input id="WINEPTS_PortIdTextbox" name="WINEPTS_PortIdTextbox" size="30" type="text" /></td>
 </tr>
+<tr>
+<td>&nbsp;</td>
+<td><input name="run_button" type="button" value="Salva impostazioni" onClick="Main" />
+<!--<input name="run_button" type="button" value="Enable DHCP" onClick="EnableDHCP"/>--> 
+<input name="run_button" type="button" value="Visualizza impostazioni" onClick="Refresh" />
+
+<p>&nbsp;</p>
+<input name="run_button" type="button" value="Reboot" onClick="RebootButton" /></td>
+</tr>
+</tbody>
 </table>
+<!--{{InsertControlsHere}}-Do not remove this line-->
 </body>
+</html>
