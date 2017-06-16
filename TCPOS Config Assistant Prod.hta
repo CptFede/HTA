@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>TCPOS Config Assistant Prod v.2</title>
+<title>TCPOS Config Assistant Prod v.2.1</title>
 <HTA:APPLICATION
   APPLICATIONNAME="TCPOS Config Assistant Prod 2"
   SCROLL="YES"
@@ -21,7 +21,7 @@
 ' 14/06/2017 Added update weepts_client_local.ini also [UPB]
 ' 14/06/2017 Added to form the speification about winepts
 ' 14/06/2017 Resize window to 450, 150
-
+' 16/06/2017 issue about POS Port - solved
 
 Option Explicit
 On Error Resume Next
@@ -194,7 +194,7 @@ Sub ReadIniFile
 					'MsgBox POS_GEN(1)
 					POS_PORT = POS_GEN(1)
 					'MsgBox POS_PORT
-					window.POS_PORTTextbox.value = P2P_PORT
+					window.POS_PORTTextbox.value = POS_PORT
 					end select
 			row = row + 1
 			end if
@@ -662,10 +662,24 @@ label {
 <table style="height: 100px; float: left;" border="0" width="242" cellpadding="20">
 <tbody>
 <tr>
-<td><label>PC Name</label><input id="namePc" name="ComputerName" size="30" type="textbox" /> <label>IP address</label> <input id="IPaddress" name="IPaddress" size="30" type="textbox" /> <label>Subnet</label><input id="Subnet" name="Subnet" size="30" type="textbox" /> <label>Gateway</label><input id="Gateway" name="Gateway" size="30" type="textbox" /> <label>DNS Server 1 </label><input id="DNSServer1" name="DNSServer1" size="30" type="textbox" /> <label>DNS Server 2</label><input id="DNSServer2" name="DNSServer2" size="30" type="textbox" />
+<td><label>PC Name</label><input id="namePc" name="ComputerName" size="30" type="textbox" /> 
+<label>IP address</label> <input id="IPaddress" name="IPaddress" size="30" type="textbox" /> 
+<label>Subnet</label><input id="Subnet" name="Subnet" size="30" type="textbox" /> 
+<label>Gateway</label><input id="Gateway" name="Gateway" size="30" type="textbox" /> 
+<label>DNS Server 1 </label><input id="DNSServer1" name="DNSServer1" size="30" type="textbox" /> 
+<label>DNS Server 2</label><input id="DNSServer2" name="DNSServer2" size="30" type="textbox" />
 <p>&nbsp;</p>
 </td>
-<td><label>TILL</label><input id="TillTextbox" name="TillTextbox" size="30" type="text" /> <label>SHOP</label><input id="ShopTextbox" name="ShopTextbox" size="30" type="text" /> <label>P2P_ADDRESS </label><input id="P2P_AddressTextbox" name="P2P_AddressTextbox" size="30" type="text" /> <label>P2P_PORT </label><input id="P2P_PORTTextbox" name="P2P_PORTTextbox" size="30" type="text" /> <label>POS_TID </label><input id="POS_TIDTextbox" name="POS_TIDTextbox" size="30" type="text" /> <label>POS_PORT </label><input id="POS_PortTextbox" name="POS_PortTextbox" size="30" type="text" /> <label>POS_ADDRESS </label><input id="POS_AddressTextbox" name="POS_AddressTextbox" size="30" type="text" /> <label>WINEPTS NodeId:(codice cassa) </label><input id="WINEPTS_NodeIdTextbox" name="WINEPTS_NodeIdTextbox" size="30" type="text" /> <label>WINEPTS PortId:(codice negozio) </label><input id="WINEPTS_PortIdTextbox" name="WINEPTS_PortIdTextbox" size="30" type="text" /></td>
+<td><label>TILL</label><input id="TillTextbox" name="TillTextbox" size="30" type="text" /> 
+<label>SHOP</label><input id="ShopTextbox" name="ShopTextbox" size="30" type="text" /> 
+<label>P2P_ADDRESS </label><input id="P2P_AddressTextbox" name="P2P_AddressTextbox" size="30" type="text" /> 
+<label>P2P_PORT </label><input id="P2P_PORTTextbox" name="P2P_PORTTextbox" size="30" type="text" /> 
+<label>POS_TID </label><input id="POS_TIDTextbox" name="POS_TIDTextbox" size="30" type="text" /> 
+<label>POS_PORT </label><input id="POS_PortTextbox" name="POS_PortTextbox" size="30" type="text" /> 
+<label>POS_ADDRESS </label><input id="POS_AddressTextbox" name="POS_AddressTextbox" size="30" type="text" /> 
+<label>WINEPTS NodeId:(codice cassa) </label><input id="WINEPTS_NodeIdTextbox" name="WINEPTS_NodeIdTextbox" size="30" type="text" /> 
+<label>WINEPTS PortId:(codice negozio)</label><input id="WINEPTS_PortIdTextbox" name="WINEPTS_PortIdTextbox" size="30" type="text" />
+</td>
 </tr>
 <tr>
 <td>&nbsp;</td>
